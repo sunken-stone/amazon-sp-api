@@ -5,34 +5,6 @@ const endpoint = 'catalogItems';
 
 describe(endpoint, async function(){
 
-	it('should return a list of catalog items', async function(){
-		let res = await this.sellingPartner.callAPI({
-			operation:'listCatalogItems',
-      endpoint:endpoint,
-			query:{
-      	MarketplaceId:this.config.marketplace_id,
-      	Query:'samsung'
-      }
-    });
-    expect(res).to.be.a('object');
-    expect(res.Items).to.be.a('array');
-	});
-
-	it('should return a catalog item (v0)', async function(){
-		let res = await this.sellingPartner.callAPI({
-			operation:'getCatalogItem',
-      endpoint:endpoint,
-			path:{
-				asin:this.config.asin
-			},
-			query:{
-      	MarketplaceId:this.config.marketplace_id
-      }
-    });
-    expect(res).to.be.a('object');
-    expect(res.Identifiers).to.be.a('object');
-	});
-
   it('should return a catalog item (2020-12-01)', async function(){
     let res = await this.sellingPartner.callAPI({
       operation:'getCatalogItem',
@@ -41,7 +13,7 @@ describe(endpoint, async function(){
         asin:this.config.asin
       },
       query:{
-        marketplaceIds:['A1PA6795UKMFR9'],
+        marketplaceIds:[this.config.marketplace_id],
         includedData:['identifiers', 'images', 'productTypes', 'salesRanks', 'summaries', 'variations']
       },
       options:{
@@ -121,4 +93,40 @@ describe(endpoint, async function(){
     expect(res.items).to.have.lengthOf(10);
   });
 
+  it('should return a catalog item (2022-04-01) for SKU', async function(){
+    let res = await this.sellingPartner.callAPI({
+      operation:'searchCatalogItems',
+      endpoint:endpoint,
+      query:{
+        identifiers:[this.config.sku],
+        identifiersType:'SKU',
+        marketplaceIds:[this.config.marketplace_id],
+        sellerId:this.config.seller_id,
+        includedData:['images']
+      },
+      options:{
+        version:'2022-04-01'
+      }
+    });
+    expect(res).to.be.a('object');
+    expect(res.items[0].asin).to.be.a('string');
+  });
+
+  it('should return a catalog item (2022-04-01)', async function(){
+    let res = await this.sellingPartner.callAPI({
+      operation:'getCatalogItem',
+      endpoint:endpoint,
+      path:{
+        asin:this.config.asin
+      },
+      query:{
+        marketplaceIds:[this.config.marketplace_id]
+      },
+      options:{
+        version:'2022-04-01'
+      }
+    });
+    expect(res).to.be.a('object');
+    expect(res.asin).to.be.a('string');
+	});
 });

@@ -53,7 +53,7 @@ export interface GetOrderItemsBuyerInfoResponse extends BaseResponse{
 }
 
 export interface GetOrderItemResponse extends BaseResponse{
-    payload?: OrderItemList
+    payload?: OrderItemsList
 }
 
 export interface GetOrderAddressResponse extends BaseResponse{
@@ -139,11 +139,14 @@ interface OrderItemBuyerInfoList{
     OrderItemBuyerInfo?: OrderItemBuyerInfo[];
 }
 
+// Unused type
+/*
 interface OrderItemsBuyerInfoList{
     OrderItems: OrderItemBuyerInfoList;
     NextToken?: string;
     AmazonOrderId: string;
 }
+*/
 
 interface OrderItem{
     ASIN: string;
@@ -175,7 +178,7 @@ interface OrderItem{
     TaxCollection?: TaxCollection;
     SerialNumberRequired?: boolean;
     IsTransparency?: boolean;
-    IossNumber?: String;
+    IossNumber?: string;
     StoreChainStoreId?: string;
     DeemedResellerCategory?: DeemedResellerCategory;
 }
@@ -220,7 +223,7 @@ interface Address{
     AddressLine2?: string;
     AddressLine3?: string;
     City?: string;
-    Country?: String;
+    Country?: string;
     District?: string;
     StateOrRegion?: string;
     Municipality?: string;

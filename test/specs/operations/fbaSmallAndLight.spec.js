@@ -47,7 +47,13 @@ describe(endpoint, async function(){
         expect(['ELIGIBLE', 'NOT_ELIGIBlE']).to.include(res.status);
       } catch(e){
         // TODO: Check what could be other error reasons?
-        expect(['EXPECTED_SALES_VELOCITY_TOO_LOW', 'UNCOMMINGLING_FNSKU_ON_SHIPMENT', 'INVALID_ASIN_PRICE']).to.include(e.code);
+        expect([
+          'EXPECTED_SALES_VELOCITY_TOO_LOW',
+          'UNCOMMINGLING_FNSKU_ON_SHIPMENT',
+          'INVALID_ASIN_PRICE',
+          'INVALID_PACKAGE_DIMENSIONS',
+          'INVALID_PACKAGE_WEIGHT'
+        ]).to.include(e.code);
       }
     } else {
       this.skip();

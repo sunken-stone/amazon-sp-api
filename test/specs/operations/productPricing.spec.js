@@ -20,6 +20,29 @@ describe(endpoint, async function(){
     expect(res[0].ASIN).to.equal(this.config.asin);
   });
 
+  it('should return pricing information for asins array', async function(){
+    if (this.config.asin2){
+      let asins = [this.config.asin, this.config.asin2];
+      let res = await this.sellingPartner.callAPI({
+        operation:'getPricing',
+        endpoint:endpoint,
+        query:{
+          MarketplaceId:this.config.marketplace_id,
+          Asins:asins,
+          ItemType:'Asin'
+        }
+      });
+      expect(res).to.be.a('array');
+      expect(res).to.have.lengthOf(2);
+      res.map((res_val) => {
+        expect(res_val.status).to.be.a('string');
+        expect(asins).to.include(res_val.ASIN);
+      });
+    } else {
+      this.skip();
+    }
+  });
+
 	it('should return pricing information for sku', async function(){
     if (this.config.sku){
   		let res = await this.sellingPartner.callAPI({
@@ -38,6 +61,29 @@ describe(endpoint, async function(){
       this.skip();
     }
 	});
+
+  it('should return pricing information for skus array', async function(){
+    if (this.config.sku2){
+      let skus = [this.config.sku, this.config.sku2];
+      let res = await this.sellingPartner.callAPI({
+        operation:'getPricing',
+        endpoint:endpoint,
+        query:{
+          MarketplaceId:this.config.marketplace_id,
+          Skus:skus,
+          ItemType:'Sku'
+        }
+      });
+      expect(res).to.be.a('array');
+      expect(res).to.have.lengthOf(2);
+      res.map((res_val) => {
+        expect(res_val.status).to.be.a('string');
+        expect(skus).to.include(res_val.SellerSKU);
+      });
+    } else {
+      this.skip();
+    }
+  });
 
   it('should return competitive pricing information for asin', async function(){
     let res = await this.sellingPartner.callAPI({
@@ -125,6 +171,68 @@ describe(endpoint, async function(){
     expect(res.Identifier).to.be.a('object');
     expect(res.Summary).to.be.a('object');
     // expect(res.Offers).to.be.a('array');
+  });
+
+  it('should return lowest priced offers for asin as batch request', async function(){
+    let res = await this.sellingPartner.callAPI({
+      operation:'getItemOffersBatch',
+      endpoint:endpoint,
+      body:{
+        requests:[{
+          uri:'/products/pricing/v0/items/' + this.config.asin + '/offers',
+          method:'GET',
+          queryParams:{
+            MarketplaceId:this.config.marketplace_id,
+            ItemCondition:'New'
+          }
+        }]
+      }
+    });
+    expect(res).to.be.a('object');
+    expect(res.responses).to.be.a('array');
+    expect(res.responses).to.have.lengthOf(1);
+  });
+
+  it('should return lowest priced offers for sku as batch request', async function(){
+    if (this.config.sku){
+      let res = await this.sellingPartner.callAPI({
+        operation:'getListingOffersBatch',
+        endpoint:endpoint,
+        body:{
+          requests:[{
+            uri:'/products/pricing/v0/listings/' + this.config.sku + '/offers',
+            method:'GET',
+            queryParams:{
+              MarketplaceId:this.config.marketplace_id,
+              ItemCondition:'New'
+            }
+          }]
+        }
+      });
+      expect(res).to.be.a('object');
+      expect(res.responses).to.be.a('array');
+      expect(res.responses).to.have.lengthOf(1);
+    } else {
+      this.skip();
+    }
+  });
+
+  it('should return ClientError status for special chars skus array', async function(){
+    let skus = ['#+ =?~_-|/!*?()', '@#+ =?~_-|/!*?[]'];
+    let res = await this.sellingPartner.callAPI({
+      operation:'getPricing',
+      endpoint:endpoint,
+      query:{
+        MarketplaceId:this.config.marketplace_id,
+        Skus:skus,
+        ItemType:'Sku'
+      }
+    });
+    expect(res).to.be.a('array');
+    expect(res).to.have.lengthOf(2);
+    res.map((res_val) => {
+      expect(res_val.status).to.be.equal('ClientError');
+    });
   });
 
 });

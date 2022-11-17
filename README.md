@@ -2,6 +2,14 @@
 
 The client handles calls to the Amazon Selling Partner API. It wraps up all the necessary stuff such as requesting access token, security token and signing requests with AWS4 signature.
 
+```diff
+! Thank you for using our module!
+! Interested in supporting us to build the best Amazon Seller Tool out there?
+- We are currently hiring Full Stack Developers (Techstack React/NextJS/MongoDB/Node).
+! Just drop us a line at info@amz.tools or visit us at amz.tools.
+! We'll definitely get back to you!
+```
+
 ## Contents
 
 * [Prerequisites](#prerequisites)
@@ -24,6 +32,7 @@ The client handles calls to the Amazon Selling Partner API. It wraps up all the 
   * [Unsupported endpoints/versions/operations](#unsupported-endpointsversionsoperations)
   * [Grantless operations](#grantless-operations)
   * [Restore rates](#restore-rates)
+  * [Timeouts](#timeouts)
 * [Download, decrypt and unzip reports](#download-decrypt-and-unzip-reports)
 * [Encrypt and upload feeds](#encrypt-and-upload-feeds)
 * [TypeScript Support](#typescript-support)
@@ -33,7 +42,7 @@ The client handles calls to the Amazon Selling Partner API. It wraps up all the 
 
 ## Prerequisites
 
-Make sure that you followed the [Selling Partner API Developer Guide](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md) and have successfully completed the steps [Registering as a developer](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#registering-as-a-developer), [Registering your application](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#registering-your-application) and have a valid refresh token (if you use the client only for your own seller account the easiest way is using the self authorization as described in the developer guide).
+Make sure that you followed the [Selling Partner API Developer Guide](https://developer-docs.amazon.com/sp-api/docs) and have successfully completed the steps [Registering as a developer](https://developer-docs.amazon.com/sp-api/docs/registering-as-a-developer), [Registering your application](https://developer-docs.amazon.com/sp-api/docs/registering-your-application) and have a valid refresh token (if you use the client only for your own seller account the easiest way is using the self authorization as described in the developer guide).
 
 ## Installation
 ```bash
@@ -46,11 +55,12 @@ Before you can use the client you need to add your app client and aws user crede
 
 ### Setting credentials from environment variables
 
-* `SELLING_PARTNER_APP_CLIENT_ID`=<YOUR_APP_CLIENT_ID> ([see SP Developer Guide "Viewing your developer information"](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#viewing-your-developer-information))
-* `SELLING_PARTNER_APP_CLIENT_SECRET`=<YOUR_APP_CLIENT_SECRET> ([see SP Developer Guide "Viewing your developer information"](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#viewing-your-developer-information))
+* `SELLING_PARTNER_APP_CLIENT_ID`=<YOUR_APP_CLIENT_ID> ([see SP Developer Guide "Viewing your application information and credentials"](https://developer-docs.amazon.com/sp-api/docs/viewing-your-application-information-and-credentials))
+* `SELLING_PARTNER_APP_CLIENT_SECRET`=<YOUR_APP_CLIENT_SECRET> ([see SP Developer Guide "Viewing your application information and credentials"](https://developer-docs.amazon.com/sp-api/docs/viewing-your-application-information-and-credentials))
 * `AWS_SELLING_PARTNER_ACCESS_KEY_ID` or `AWS_ACCESS_KEY_ID`=<YOUR_AWS_USER_ID> ([see SP Developer Guide "Create an IAM user"](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#step-2-create-an-iam-user))
-* `AWS_SELLING_PARTNER_SECRET_ACCESS_KEY` or `AWS_SECRET_ACCESS_KEY`=<YOUR_AWS_USER_SECRET> ([see SP Developer Guide "Create an IAM user"](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#step-2-create-an-iam-user))
-* `AWS_SELLING_PARTNER_ROLE`=<YOUR_AWS_SELLING_PARTNER_API_ROLE> ([see SP Developer Guide "Create an IAM role"](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#step-4-create-an-iam-role))
+* `AWS_SELLING_PARTNER_SECRET_ACCESS_KEY` or `AWS_SECRET_ACCESS_KEY`=<YOUR_AWS_USER_SECRET> ([see SP Developer Guide "Create an IAM user"](https://developer-docs.amazon.com/sp-api/docs/creating-and-configuring-iam-policies-and-entities#step-2-create-an-iam-user))
+* `AWS_SELLING_PARTNER_SESSION_TOKEN` or `AWS_SESSION_TOKEN`=<YOUR_AWS_SESSION_TOKEN> (only necessary when using temporary AWS STS security credentials, [see "Using temporary credentials with AWS resources"](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html))
+* `AWS_SELLING_PARTNER_ROLE`=<YOUR_AWS_SELLING_PARTNER_API_ROLE> ([see SP Developer Guide "Create an IAM role"](https://developer-docs.amazon.com/sp-api/docs/creating-and-configuring-iam-policies-and-entities#step-4-create-an-iam-role))
 
 ### Setting credentials from file
 
@@ -60,6 +70,7 @@ SELLING_PARTNER_APP_CLIENT_ID=<YOUR_APP_CLIENT_ID>
 SELLING_PARTNER_APP_CLIENT_SECRET=<YOUR_APP_CLIENT_SECRET>
 AWS_ACCESS_KEY_ID=<YOUR_AWS_USER_ID>
 AWS_SECRET_ACCESS_KEY=<YOUR_AWS_USER_SECRET>
+AWS_SESSION_TOKEN=<YOUR_AWS_SESSION_TOKEN> // Only necessary when using temporary AWS STS security credentials
 AWS_SELLING_PARTNER_ROLE=<YOUR_AWS_SELLING_PARTNER_API_ROLE>
 ```
 
@@ -114,6 +125,7 @@ The class constructor takes a config object with the following structure as inpu
     SELLING_PARTNER_APP_CLIENT_SECRET:'<APP_CLIENT_SECRET>',
     AWS_ACCESS_KEY_ID:'<AWS_USER_ID>',
     AWS_SECRET_ACCESS_KEY:'<AWS_USER_SECRET>',
+    AWS_SESSION_TOKEN: '<AWS_SESSION_TOKEN>',
     AWS_SELLING_PARTNER_ROLE:'<AWS_SELLING_PARTNER_API_ROLE>'
   },
   options:{
@@ -122,37 +134,45 @@ The class constructor takes a config object with the following structure as inpu
     auto_request_throttled:true,
     version_fallback:true,
     use_sandbox:false,
-    only_grantless_operations:false
+    only_grantless_operations:false,
+    user_agent:'amazon-sp-api/<CLIENT_VERSION> (Language=Node.js/<NODE_VERSION>; Platform=<OS_PLATFORM>/<OS_RELEASE>)',
+    debug_log:false,
+    timeouts:{
+      ...
+    }
   }
 }
 ```
 Valid properties of the config object:
 
-| Name | Type | Default | Description |
-|:--|:--:|:--:|:--|
-| **region**<br>*required* | string | - | The region to use for the SP-API endpoints.<br>Must be one of: `eu`, `na` or `fe` |
-| **refresh_token**<br>*optional* | string | - | The refresh token of your app user.<br>Required if `only_grantless_operations` option is set to `false`. |
-| **access_token**<br>*optional* | string | - | The temporary access token requested with the refresh token of the app user. |
-| **role_credentials**<br>*optional* | object | - | The temporary role credentials for the sellingpartner api role of the iam user. Must include the three properties `id`, `secret` and `security_token` with their corresponding values. |
-| **endpoints_versions**<br>*optional* | object | - | Defines the version to use for an endpoint as key/value pairs, i.e. `"reports":"2021-06-30"`. If none given the client is using the first (meaning the oldest) version for an endpoint.<br>Call `.endpoints` on class instance to retrieve a complete list of all endpoints, versions and operations supported by the client. |
-| **credentials**<br>*optional* | object | - | The app client and aws user credentials. Must include the five credentials properties `SELLING_PARTNER_APP_CLIENT_ID`, `SELLING_PARTNER_APP_CLIENT_SECRET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SELLING_PARTNER_ROLE` with their corresponding values.<br>NOTE: Should only be used if you have no means of using environment vars or credentials file! |
-| **options**<br>*optional* | object | - | Additional options, see table below for all possible options properties. |
+| Name                                 |  Type  | Default | Description                                                                                                                                                                                                                                                                                                                                                            |
+| :----------------------------------- | :----: | :-----: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **region**<br>*required*             | string |    -    | The region to use for the SP-API endpoints.<br>Must be one of: `eu`, `na` or `fe`                                                                                                                                                                                                                                                                                      |
+| **refresh_token**<br>*optional*      | string |    -    | The refresh token of your app user.<br>Required if `only_grantless_operations` option is set to `false`.                                                                                                                                                                                                                                                               |
+| **access_token**<br>*optional*       | string |    -    | The temporary access token requested with the refresh token of the app user.                                                                                                                                                                                                                                                                                           |
+| **role_credentials**<br>*optional*   | object |    -    | The temporary role credentials for the sellingpartner api role of the iam user. Must include the three properties `id`, `secret` and `security_token` with their corresponding values.                                                                                                                                                                                 |
+| **endpoints_versions**<br>*optional* | object |    -    | Defines the version to use for an endpoint as key/value pairs, i.e. `"reports":"2021-06-30"`. If none given the client is using the first (meaning the oldest) version for an endpoint.<br>Call `.endpoints` on class instance to retrieve a complete list of all endpoints, versions and operations supported by the client.                                          |
+| **credentials**<br>*optional*        | object |    -    | The app client and aws user credentials. Must include the five credentials properties `SELLING_PARTNER_APP_CLIENT_ID`, `SELLING_PARTNER_APP_CLIENT_SECRET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SELLING_PARTNER_ROLE` with their corresponding values. Must also include `AWS_SESSION_TOKEN` when using temporary AWS STS security credentials.<br>NOTE: Should only be used if you have no means of using environment vars or credentials file! |
+| **options**<br>*optional*            | object |    -    | Additional options, see table below for all possible options properties.                                                                                                                                                                                                                                                                                               |
 
 Valid properties of the config options:
 
-| Name | Type | Default | Description |
-|:--|:--:|:--:|--|
-| **credentials_path**<br>*optional* | string | ~/.amzspapi/credentials | A custom absolute path to your credentials file location. |
-| **auto_request_tokens**<br>*optional* | boolean | true | Whether or not the client should retrieve new access and role credentials if non given or expired. |
-| **auto_request_throttled**<br>*optional* | boolean | true | Whether or not the client should automatically retry a request when throttled. |
-| **version_fallback**<br>*optional* | boolean | true | Whether or not the client should try to use an older version of an endpoint if the operation is not defined for the desired version. |
-| **use_sandbox**<br>*optional* | boolean | false | Whether or not to use the sandbox endpoint. |
-| **only_grantless_operations**<br>*optional* | boolean | false | Whether or not to only use grantless operations. |
+| Name                                        |  Type   |                                                Default                                                | Description                                                                                                                                                                                                                        |
+| :------------------------------------------ | :-----: | :---------------------------------------------------------------------------------------------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **credentials_path**<br>*optional*          | string  |                                        ~/.amzspapi/credentials                                        | A custom absolute path to your credentials file location.                                                                                                                                                                          |
+| **auto_request_tokens**<br>*optional*       | boolean |                                                 true                                                  | Whether or not the client should retrieve new access and role credentials if non given or expired.                                                                                                                                 |
+| **auto_request_throttled**<br>*optional*    | boolean |                                                 true                                                  | Whether or not the client should automatically retry a request when throttled.                                                                                                                                                     |
+| **version_fallback**<br>*optional*          | boolean |                                                 true                                                  | Whether or not the client should try to use an older version of an endpoint if the operation is not defined for the desired version.                                                                                               |
+| **use_sandbox**<br>*optional*               | boolean |                                                 false                                                 | Whether or not to use the sandbox endpoint.                                                                                                                                                                                        |
+| **only_grantless_operations**<br>*optional* | boolean |                                                 false                                                 | Whether or not to only use grantless operations.                                                                                                                                                                                   |
+| **user_agent**<br>*optional*                | string  | amazon-sp-api/<CLIENT_VERSION> (Language=Node.js/<NODE_VERSION>; Platform=<OS_PLATFORM>/<OS_RELEASE>) | A custom user-agent header ([see desired format in docs](https://developer-docs.amazon.com/amazon-shipping/docs/include-a-user-agent-header-in-all-requests)). |
+| **debug_log**<br>*optional*                 | boolean |                                                 false                                                 | Whether or not the client should print console logs for debugging purposes.                                                                                                                                                        |
+| **timeouts**<br>*optional* | object | -    | Allows to set timeouts for requests. Valid keys are `response`, `idle` and `deadline`. Please see detailed information in the [Timeouts](#timeouts) section. |
 
 ### Exchange an authorization code for a refresh token
-If you already have a refresh token you can skip this step. If you only want to use the API for your own seller account you can just use the [self authorization](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#self-authorization) to obtain a valid refresh token.
+If you already have a refresh token you can skip this step. If you only want to use the API for your own seller account you can just use the [self authorization](https://developer-docs.amazon.com/amazon-shipping/docs/self-authorization) to obtain a valid refresh token.
 
-If you want to exchange an authorization code of a seller you can use the `.exchange()` function of the client. The neccessary authorization code is returned to your callback URI as `spapi_oauth_code` when a seller authorizes your application ([see authorization workflow in docs](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#authorizing-selling-partner-api-applications)) or via a call to the `getAuthorizationCode` operation if you want to authorize a seller for the SP-API who has previously authorized you for the MWS API (the `getAuthorizationCode` workflow is explained in the [Grantless operations](#grantless-operations) section).
+If you want to exchange an authorization code of a seller you can use the `.exchange()` function of the client. The neccessary authorization code is returned to your callback URI as `spapi_oauth_code` when a seller authorizes your application ([see authorization workflow in docs](https://developer-docs.amazon.com/amazon-shipping/docs/authorizing-selling-partner-api-applications)) or via a call to the `getAuthorizationCode` operation if you want to authorize a seller for the SP-API who has previously authorized you for the MWS API (the `getAuthorizationCode` workflow is explained in the [Grantless operations](#grantless-operations) section).
 
 Once you have obtained the authorization_code you can exchange it for a refresh token:
 ```javascript
@@ -217,30 +237,36 @@ All calls to the SP-API will be triggered by using the `.callAPI()` function, wh
   restricted_data_token:'<RESTRICTED_DATA_TOKEN>',
   options:{
     version:'<OPERATION_ENDPOINT_VERSION>',
-    raw_result:false
+    restore_rate:'<RESTORE_RATE_IN_SECONDS>',
+    raw_result:false,
+    timeouts:{
+      ...
+    }
   }
 }
 ```
 Valid properties of the object:
 
-| Name | Type | Default | Description |
-|:--|:--:|:--:|:--|
-| **operation**<br>*optional* | string | - | The operation you want to request, [see SP API References](https://github.com/amzn/selling-partner-api-docs/tree/main/references).<br>May also include endpoint as shorthand dot notation.<br>Call `.endpoints` on class instance to retrieve a complete list of all endpoints, versions and operations supported by the client.<br>Required if `api_path` is not defined. |
-| **endpoint**<br>*optional* | string | - | The endpoint of the operation, ([see Endpoints](#endpoints)).<br>Call `.endpoints` on class instance to retrieve a complete list of all endpoints, versions and operations supported by the client.<br>Required if endpoint is not part of `operation` as shorthand dot notation and `api_path` is not defined. |
-| **path**<br>*optional* | object | - | The input paramaters added to the path of the operation. |
-| **query**<br>*optional* | object | - | The input paramaters added to the query string of the operation. |
-| **body**<br>*optional* | object | - | The input paramaters added to the body of the operation. |
-| **api_path**<br>*optional* | string | - | The full api path of an operation. Can be used to call operations that are not yet supported or have a new version that is not yet supported by the client.<br>Required if `operation` is not defined. |
-| **method**<br>*optional* | string | - | The HTTP method to use.<br>Required only if `api_path` is defined.<br>Must be one of: `GET`, `POST`, `PUT`,`DELETE` or `PATCH`. |
-| **restricted_data_token**<br>*optional* | string | - | A token received from a `createRestrictedDataToken` operation. Neccessary to include PII (Personally Identifiable Informaton) for some restricted operations, [see Tokens API use case guide](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/use-case-guides/tokens-api-use-case-guide/tokens-API-use-case-guide-2021-03-01.md#restricted-operations) for a list of restricted operations.<br>NOTE: Your developer account must be approved for PII by Amazon in order to be able to receive PII, otherwise the token will have no effect, meaning the result of restricted operations will not include PII. |
-| **options**<br>*optional* | object | - | Additional options, see table below for all possible options properties. |
+| Name                                    |  Type  | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| :-------------------------------------- | :----: | :-----: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **operation**<br>*optional*             | string |    -    | The operation you want to request, [see SP API Developer Guide](https://developer-docs.amazon.com/sp-api/docs).<br>May also include endpoint as shorthand dot notation.<br>Call `.endpoints` on class instance to retrieve a complete list of all endpoints, versions and operations supported by the client.<br>Required if `api_path` is not defined.                                                                                                                                                                                                                                                            |
+| **endpoint**<br>*optional*              | string |    -    | The endpoint of the operation, ([see Endpoints](#endpoints)).<br>Call `.endpoints` on class instance to retrieve a complete list of all endpoints, versions and operations supported by the client.<br>Required if endpoint is not part of `operation` as shorthand dot notation and `api_path` is not defined.                                                                                                                                                                                                                                                                                                                       |
+| **path**<br>*optional*                  | object |    -    | The input paramaters added to the path of the operation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **query**<br>*optional*                 | object |    -    | The input paramaters added to the query string of the operation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **body**<br>*optional*                  | object |    -    | The input paramaters added to the body of the operation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **api_path**<br>*optional*              | string |    -    | The full api path of an operation. Can be used to call operations that are not yet supported or have a new version that is not yet supported by the client.<br>Required if `operation` is not defined.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **method**<br>*optional*                | string |    -    | The HTTP method to use.<br>Required only if `api_path` is defined.<br>Must be one of: `GET`, `POST`, `PUT`,`DELETE` or `PATCH`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **restricted_data_token**<br>*optional* | string |    -    | A token received from a `createRestrictedDataToken` operation. Neccessary to include PII (Personally Identifiable Informaton) for some restricted operations, [see Tokens API use case guide](https://developer-docs.amazon.com/sp-api/docs/tokens-api-use-case-guide) for a list of restricted operations.<br>NOTE: Your developer account must be approved for PII by Amazon in order to be able to receive PII, otherwise the token will have no effect, meaning the result of restricted operations will not include PII. |
+| **options**<br>*optional*               | object |    -    | Additional options, see table below for all possible options properties.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 Valid properties of the config options:
 
-| Name | Type | Default | Description |
-|:--|:--:|:--:|--|
-| **version**<br>*optional* | string | - | The endpoint's version that should be used when calling the operation. Will be preferred over an `endpoints_versions` setting.<br>NOTE: The call might still use an older version of the endpoint if the operation is not available for the specified version and `version_fallback` is set to `true`. |
-| **raw_result**<br>*optional* | boolean | false | Whether or not the client should return the "raw" result, which will include the raw body, buffer chunks, statuscode and headers of the result. This will skip the internal formatting or error checking, but might be helpful when you need additional information besides the payload or when the client encounters JSON.parse errors such as the ones already encountered with old finance documents ([see Known Issues](#known-issues)). |
+| Name                           |  Type   | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| :----------------------------- | :-----: | :-----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **version**<br>*optional*      | string  |    -    | The endpoint's version that should be used when calling the operation. Will be preferred over an `endpoints_versions` setting.<br>NOTE: The call might still use an older version of the endpoint if the operation is not available for the specified version and `version_fallback` is set to `true`.                                                                                                                                       |
+| **restore_rate**<br>*optional* | number  |    -    | The restore rate (in seconds) that should be used when calling the operation. Will be preferred over the default restore rate of the operation.                                                                                                                                                                                                                                                                                              |
+| **raw_result**<br>*optional*   | boolean |  false  | Whether or not the client should return the "raw" result, which will include the raw body, buffer chunks, statuscode and headers of the result. This will skip the internal formatting or error checking, but might be helpful when you need additional information besides the payload or when the client encounters JSON.parse errors such as the ones already encountered with old finance documents ([see Known Issues](#known-issues)). |
+| **timeouts**<br>*optional* | object | -    | Allows to set timeouts for requests. Valid keys are `response`, `idle` and `deadline`. Please see detailed information in the [Timeouts](#timeouts) section. |
 
 ### Examples
 
@@ -305,19 +331,48 @@ let res = await sellingPartner.callAPI({
   }
 });
 ```
+```javascript
+try {
+  let res = await sellingPartner.callAPI({
+    operation: 'getCompetitivePricing',
+    endpoint: 'productPricing',
+    query: {
+      Asins: ['B00Z7T970I','B01BHHE9VK'],
+      ItemType: 'Asin',
+      MarketplaceId: 'A1PA6795UKMFR9'
+    },
+    options: {
+      version: 'v0',
+      raw_result: true,
+      timeouts:{
+        response:5000,
+        idle:10000,
+        deadline:30000
+      }
+    }
+  });
+} catch(err) {
+  if (err.code){
+    if (err.code ==='API_RESPONSE_TIMEOUT') console.log('SP-API ERROR: response timeout: ' + err.timeout + 'ms exceeded.',err.message);
+    if (err.code ==='API_IDLE_TIMEOUT') console.log('SP-API ERROR: idle timeout: ' + err.timeout + 'ms exceeded.',err.message);
+    if (err.code ==='API_DEADLINE_TIMEOUT') console.log('SP-API ERROR: deadline timeout: ' + err.timeout + 'ms exceeded.',err.message);
+  } 
+}
+```
+
 NOTE: As the original design of the client (< v0.4.0) didn't keep in mind the possibility of having the exact same operation name for multiple endpoints (i.e. `getShipment`, [see Issue #33](https://github.com/amz-tools/amazon-sp-api/issues/33)) and multiple versions of the same endpoint, we had to replace original operation-only based calls to the API with a new concept that includes endpoints and version-specific operation calls. This concept comes without any breaking changes, so you can still safely upgrade from any version below 0.4.0 to the latest version, but the use of `.callAPI()` without specifying an endpoint is considered deprecated, is discouraged and will trigger a console warning.
 
 ### Endpoints
-The exact endpoint's name of an operation will be the references name ([see SP API References](https://github.com/amzn/selling-partner-api-docs/tree/main/references)) without `-` and `api` and continued with a capital letter. So the `catalog-items-api` endpoint's name will be `catalogItems`, `fba-small-and-light-api` will be `fbaSmallAndLight`, `sellers-api` will be `sellers` and so on. You can also retrieve the endpoint names and their operations and versions by calling `sellingPartner.endpoints`.
+The exact endpoint's name of an operation will be the references name ([see SP API Developer Guide](https://developer-docs.amazon.com/sp-api/docs)) without `API` and all spaces removed and continued with a capital letter. So the `Catalog Items API` endpoint's name will be `catalogItems`, `FBA Small and Light API` will be `fbaSmallAndLight`, `Sellers API` will be `sellers` and so on. You can also retrieve the endpoint names and their operations and versions by calling `sellingPartner.endpoints`.
 
 ### Versions
 
-Every operation belongs to an endpoint that consists of one or more versions and each version consists of one or more operations. You will find a complete list of the endpoints with all versions and operations [here in the Selling Partner API Docs](https://github.com/amzn/selling-partner-api-docs/tree/main/references). For a complete list of all currently by the client supported endpoints with versions and operations you can just call `sellingPartner.endpoints`.
+Every operation belongs to an endpoint that consists of one or more versions and each version consists of one or more operations. You will find a complete list of the endpoints with all versions and operations [in the SP API Developer Guide](https://developer-docs.amazon.com/sp-api/docs). For a complete list of all currently by the client supported endpoints with versions and operations you can just call `sellingPartner.endpoints`.
 
 
 #### Version specific operation implementations
 
-The client uses the first (in fact the oldest) endpoint version if no version is provided since new versions of some operations are not backward compatible. So in order to prevent breaking changes we can't enable latest endpoint versions by default. I.e. the two different implementations of the `getCatalogItem` operation (see [catalogItemsV0](https://github.com/amzn/selling-partner-api-docs/blob/main/references/catalog-items-api/catalogItemsV0.md#getcatalogitem) vs. [catalogItems_2020-12-01](https://github.com/amzn/selling-partner-api-docs/blob/main/references/catalog-items-api/catalogItems_2020-12-01.md#getcatalogitem)) expect different input parameters and return different results.
+The client uses the first (in fact the oldest) endpoint version if no version is provided since new versions of some operations are not backward compatible. So in order to prevent breaking changes we can't enable latest endpoint versions by default. I.e. the two different implementations of the `getCatalogItem` operation (see [catalogItemsV0](https://developer-docs.amazon.com/sp-api/docs/catalog-items-api-v0-reference#getcatalogitem) vs. [catalogItems_2020-12-01](https://developer-docs.amazon.com/sp-api/docs/catalog-items-api-v2020-12-01-reference#getcatalogitem)) expect different input parameters and return different results.
 
 The implementation of the `getCatalogItem` operation in the `v0` version expects an `asin` and a `MarketplaceId` as input:
 ```javascript
@@ -397,10 +452,11 @@ let res = await sellingPartner.callAPI({
   }
 });
 ```
+NOTE: If your `api_path` includes special characters that require encoding (i.e. an SKU that contains UTF-8 characters) you will have to encode these characters manually before passing your `api_path` to `.callAPI()`.
 
 ### Grantless operations
 
-Some operations don't require an explicit authorization by a seller, [see list of grantless operations](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/developer-guide/SellingPartnerApiDeveloperGuide.md#grantless-operations-1). A grantless operation needs another access token than other operations and as such a grantless token is NOT the `access_token` you can provide in the constructor config object. However if the `auto_request_tokens` option is set to `true` the client should handle everything for you.
+Some operations don't require an explicit authorization by a seller, [see list of grantless operations](https://developer-docs.amazon.com/sp-api/docs/grantless-operations). A grantless operation needs another access token than other operations and as such a grantless token is NOT the `access_token` you can provide in the constructor config object. However if the `auto_request_tokens` option is set to `true` the client should handle everything for you.
 
 If you do the token request manually you need to create a grantless token by calling `refreshAccessToken` with the scope of the corresponding endpoint. Currently there are only two different scopes: `sellingpartnerapi::migration` for authorization endpoint and `sellingpartnerapi::notifications` for notifications endpoint.
 
@@ -438,9 +494,24 @@ let res = await sellingPartner.callAPI({
 
 ### Restore rates
 
-If you set the `auto_request_throttled` option in the class constructor config object to `true` (which is the default), the client will automatically retry the call if its throttled. It will either use the restore rate from the result header field `x-amzn-ratelimit-limit` if given ([see Usage Plans and Rate Limits](https://github.com/amzn/selling-partner-api-docs/blob/main/guides/en-US/usage-plans-rate-limits/Usage-Plans-and-Rate-Limits.md)) or otherwise use the default restore rate of the operation. If you set `auto_request_throttled` to `false` the client will throw a `QuotaExceeded` error when a request is throttled.
+If you set the `auto_request_throttled` option in the class constructor config object to `true` (which is the default), the client will automatically retry the call if its throttled. It will either use the restore rate from the result header field `x-amzn-ratelimit-limit` if given ([see Usage Plans and Rate Limits](https://developer-docs.amazon.com/sp-api/docs/usage-plans-and-rate-limits-in-the-sp-api)), or the value of `restore_rate` option in `.callAPI()` function if given, or otherwise use the default restore rate of the operation. For testing purposes you can also set `debug_log` to `true`, which will trigger a console log every time the client retries a call. If you set `auto_request_throttled` to `false` the client will throw a `QuotaExceeded` error when a request is throttled.
 
 NOTE: If you are using the same operation with the same seller account across multiple class instances the restore rate logic might NOT work correct or, even worse, result in an infinite quota exceeded loop. So if you're planning to do that you should probably set `auto_request_throttled` to `false`, catch the `QuotaExceeded` errors and handle the restore rate logic on your own.
+
+### Timeouts
+
+You may set timeouts to stop requests, i.e. to prevent scripts from "hanging" forever because a request is not finishing. The three different timeout types are `response`, `idle` and `deadline`. You may set these inside the class constructor config options to be used for all requests started via `.callAPI()` or via the config options of the `.callAPI()` method for that specific call only. The latter will override the timeouts set via class config options.
+
+NOTE:
+The `.download()` method will NOT use the timeouts defined in class constructor config options. You have to provide the timeouts to each `.download()` call inside its options object.
+
+See the table below for valid properties of the timeouts object:
+
+| Name                           |  Type   | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| :----------------------------- | :-----: | :-----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **response**<br>*optional* | number | -    | Timeout (in milliseconds) until a response timeout is fired. If exceeded the request will abort with an `API_RESPONSE_TIMEOUT` error. Response timeout is the time between sending the request and receiving the first byte of the response. Includes DNS and connection time. |
+| **idle**<br>*optional* | number | -    | Timeout (in milliseconds) until an idle timeout is fired. if exceeded the request will abort with an `API_IDLE_TIMEOUT` error. Idle is the time between receiving the last chunk of the reponse and waiting for the next chunk to be received. Might be fired if a request is stalled before finished (i.e. when internet connection is lost). |
+| **deadline**<br>*optional* | number | -    | Timeout (in milliseconds) until a deadline timeout is fired. If exceeded the request will abort with an `API_DEADLINE_TIMEOUT` error. Deadline is the time from the start of the request to receiving the response body in full. If the deadline is too short large responses may not load at all on slow connections. |
 
 ## Download, decrypt and unzip reports
 
@@ -475,12 +546,13 @@ let report = await sellingPartner.download(report_document);
 ```
 You may also include an options object as a 2nd parameter to the `.download()` function, i.e. to enable a json result or to additionally save the report to a file. It supports four optional properties:
 
-| Name | Type | Default | Description |
-|:--|:--:|:--:|--|
-| **json**<br>*optional* | boolean | false | Whether or not the content should be transformed to json before returning it (from tab delimited flat-file or XML). |
-| **unzip**<br>*optional* | boolean | true | Whether or not the content should be unzipped before returning it. |
-| **file**<br>*optional* | string | - | The absolute file path to save the report to.<br>NOTE: Even when saved to disk the report content is still returned. |
-| **charset**<br>*optional* | string | utf8 | The charset to use for decoding the content.<br>NOTE: Is ignored when content is compressed and `unzip` is set to `false`.|
+| Name                       |  Type   | Default | Description                                                                                                                |
+| :------------------------- | :-----: | :-----: | -------------------------------------------------------------------------------------------------------------------------- |
+| **json**<br>*optional*     | boolean |  false  | Whether or not the content should be transformed to json before returning it (from tab delimited flat-file or XML).        |
+| **unzip**<br>*optional*    | boolean |  true   | Whether or not the content should be unzipped before returning it.                                                         |
+| **file**<br>*optional*     | string  |    -    | The absolute file path to save the report to.<br>NOTE: Even when saved to disk the report content is still returned.       |
+| **charset**<br>*optional*  | string  |  utf8   | The charset to use for decoding the content. If not defined, it uses per default the charset returned in `content-type` header or `utf8` if no charset found in `content-type` header.<br>NOTE: Is ignored when content is compressed and `unzip` is set to `false`. |
+| **timeouts**<br>*optional* | object  | -       | Allows to set timeouts for download requests. Valid keys are `response`, `idle` and `deadline`. Please see detailed information in the [Timeouts](#timeouts) section. |
 
 The following call will download the report, transform it to json and save it to disk:
 ```javascript
@@ -490,10 +562,10 @@ let report = await sellingPartner.download(report_document, {
 });
 ```
 
-Some reports may have an encoding other than UTF-8 and require special decoding with a different charset, i.e. the `GET_MERCHANT_LISTINGS_ALL_DATA` report is encoded as `cp1252`. Proper decoding is possible with passing in the optional charset property:
+Some reports may have an encoding other than UTF-8 and require special decoding with a different charset, i.e. the `GET_MERCHANT_LISTINGS_ALL_DATA` report is encoded as `cp1252` for eu region marketplaces. The right charset to use for decoding is taken from the return header `content-type`, but you may force the use of a specific charset for decoding by passing in the optional charset property:
  ```javascript
 let report = await sellingPartner.download(report_document, {
-  charset:'cp1252'
+  charset:'cp1252' 
 });
 ```
 
@@ -503,11 +575,11 @@ The `.upload()` function takes the feed upload details (url and encryption detai
 
 Start by creating a feed object with a contentType and the content either as a string or a file path to a document:
 
-| Name | Type | Default | Description |
-|:--|:--:|:--:|--|
-| **content**<br>*optional* | string | - | The content to upload as a string.<br>Required if `file` is not provided. |
-| **file**<br>*optional* | string | - | The absolute file path to the feed content document to upload.<br>Required if `content` is not provided. |
-| **contentType**<br>*required* | string | - | The contentType of the content to upload.<br>Should be one of `text/xml` or `text/tab-separated-values` and the charset of the content, i.e. `text/xml; charset=utf-8`. |
+| Name                          |  Type  | Default | Description                                                                                                                                                             |
+| :---------------------------- | :----: | :-----: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **content**<br>*optional*     | string |    -    | The content to upload as a string.<br>Required if `file` is not provided.                                                                                               |
+| **file**<br>*optional*        | string |    -    | The absolute file path to the feed content document to upload.<br>Required if `content` is not provided.                                                                |
+| **contentType**<br>*required* | string |    -    | The contentType of the content to upload.<br>Should be one of `text/xml` or `text/tab-separated-values` and the charset of the content, i.e. `text/xml; charset=utf-8`. |
 
 This will create an inventory feed (`POST_INVENTORY_AVAILABILITY_DATA`) that will update the quantity of a given SKU to 10:
 ```javascript
@@ -564,15 +636,17 @@ All TypeScript related information can be found in [lib/typings](https://github.
 
 ## Sandbox mode
 
-You can easily enable sandbox mode by setting `use_sandbox` in the constructor config options to `true`. When using the sandbox you have to make sure to use the correct request parameters for the operation you want to test. You can find these inside the [api models definitions](https://github.com/amzn/selling-partner-api-models/tree/main/models) by searching the corresponding json file for `x-amazon-spds-sandbox-behaviors`.
-For example, this will test the `listCatalogItems` operation in sandbox mode:
+You can easily enable sandbox mode by setting `use_sandbox` in the constructor config options to `true`. General information on sandbox setup and behaviour can be found [in the corresponding section in the Selling Partner API Developer Guide](https://developer-docs.amazon.com/sp-api/docs/the-selling-partner-api-sandbox#how-to-make-a-static-sandbox-call-to-the-selling-partner-api).
+
+When using the sandbox you have to make sure to use the correct request parameters for the operation you want to test. You can find these inside the api models definitions in the docs by searching the corresponding json file for `x-amzn-api-sandbox`.
+
+For example, this will test the `getPricing` operation in sandbox mode:
 ```javascript
 let res = await sellingPartner.callAPI({
-  operation:'listCatalogItems',
-  endpoint:'catalogItems',
+  operation:'getPricing',
+  endpoint:'productPricing',
   query:{
-    MarketplaceId:'TEST_CASE_200',
-    SellerSKU:'SKU_200'
+    MarketplaceId:'TEST_CASE_400'
   }
 });
 ```
@@ -583,7 +657,7 @@ Since the Selling Partner API is still pretty new, not all API paths and endpoin
 
 Some operations don't respect the correct restore rate yet, meaning they restore a lot slower than the default restore rate.
 
-Some endpoints might have issues with special charsets like UTF-8. I.e. the `finances` operations return invalid UTF-8 encodings for all data prior to May 2020 resulting in JSON parse errors.
+There is an issue with values of arrays as part of the query, when a value contains a `,`. Due to Amazon expecting array values in query separated by `,` it will wrongfully split up values containing a `,` into two separate values. This is already a [known issue communicated to Amazon](https://github.com/amzn/selling-partner-api-docs/issues/2374).
 
 ## Seller Support
 

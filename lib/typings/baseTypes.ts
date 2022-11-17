@@ -25,8 +25,10 @@ interface Options {
   credentials_path?: string;
   auto_request_tokens?: boolean;
   auto_request_throttled?: boolean;
+  debug_log?: boolean;
   only_grantless_operations?: boolean;
   use_sandbox?: boolean;
+  user_agent?: string;
 }
 
 export interface Config {
